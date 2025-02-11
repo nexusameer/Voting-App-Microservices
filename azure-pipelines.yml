@@ -11,8 +11,8 @@ variables:
 
   # Docker Hub service connection
   dockerRegistryServiceConnection: 'dockerhub-service-connection'
-  imageRepository: 'nexusameervotingappmicroservices'
-  containerRegistry: 'docker.io/nexusameer'
+  imageRepository: 'nexusameer/votingappmicroservices'
+  containerRegistry: 'docker.io'
   dockerfilePath: '**/Dockerfile'
   tag: 'latest'
   imagePullSecret: 'dockerhub-auth'
