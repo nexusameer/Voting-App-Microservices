@@ -1,0 +1,19 @@
+apiVersion : apps/v1
+kind: Deployment
+metadata:
+  name: nexusameervotingappmicroservices 
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nexusameervotingappmicroservices
+  template:
+    metadata:
+      labels:
+        app: nexusameervotingappmicroservices 
+    spec:
+      containers:
+        - name: nexusameervotingappmicroservices 
+          image: vregistery.azurecr.io/nexusameervotingappmicroservices
+          ports:
+          - containerPort: 80
