@@ -15,7 +15,7 @@ spec:
         app: result
     spec:
       containers:
-      - image: nexusameer/voting-app-result
+      - image: nexusameer/voting-app-result:latest
         name: result
         ports:
         - containerPort: 80
