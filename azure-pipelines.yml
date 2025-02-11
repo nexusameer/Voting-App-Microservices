@@ -14,7 +14,7 @@ variables:
   imageRepository: 'nexusameervotingappmicroservices'
   containerRegistry: 'docker.io/nexusameer'
   dockerfilePath: '**/Dockerfile'
-  tag: '$(Build.BuildId)'
+  tag: 'latest'
   imagePullSecret: 'dockerhub-auth'
 
   # Agent VM image name
@@ -42,35 +42,35 @@ stages:
     - upload: manifests
       artifact: manifests
 
-- stage: Deploy
-  displayName: Deploy stage
-  dependsOn: Build
+# - stage: Deploy
+#   displayName: Deploy stage
+#   dependsOn: Build
 
-  jobs:
-  - deployment: Deploy
-    displayName: Deploy
-    pool:
-      vmImage: $(vmImageName)
-    environment: 'nexusameerVotingAppMicroservices.default'
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - task: KubernetesManifest@0
-            displayName: Create imagePullSecret
-            inputs:
-              action: createSecret
-              secretName: $(imagePullSecret)
-              dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
+#   jobs:
+#   - deployment: Deploy
+#     displayName: Deploy
+#     pool:
+#       vmImage: $(vmImageName)
+#     environment: 'nexusameerVotingAppMicroservices.default'
+#     strategy:
+#       runOnce:
+#         deploy:
+#           steps:
+#           - task: KubernetesManifest@0
+#             displayName: Create imagePullSecret
+#             inputs:
+#               action: createSecret
+#               secretName: $(imagePullSecret)
+#               dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
 
-          - task: KubernetesManifest@0
-            displayName: Deploy to Kubernetes cluster
-            inputs:
-              action: deploy
-              manifests: |
-                $(Pipeline.Workspace)/manifests/deployment.yml
-                $(Pipeline.Workspace)/manifests/service.yml
-              imagePullSecrets: |
-                $(imagePullSecret)
-              containers: |
-                $(containerRegistry)/$(imageRepository):$(tag)
+#           - task: KubernetesManifest@0
+#             displayName: Deploy to Kubernetes cluster
+#             inputs:
+#               action: deploy
+#               manifests: |
+#                 $(Pipeline.Workspace)/manifests/deployment.yml
+#                 $(Pipeline.Workspace)/manifests/service.yml
+#               imagePullSecrets: |
+#                 $(imagePullSecret)
+#               containers: |
+#                 $(containerRegistry)/$(imageRepository):$(tag)
