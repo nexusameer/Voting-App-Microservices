@@ -21,15 +21,13 @@ stages:
               kubernetesServiceConnection: 'kubeCluster-connection'
               namespace: 'default'
               manifests: |
-                k8s-specifications/db-deployment.yaml
-                k8s-specifications/db-service.yaml
-                k8s-specifications/redis-deployment.yaml
-                k8s-specifications/redis-service.yaml
-                k8s-specifications/result-deployment.yaml
-                k8s-specifications/result-service.yaml
-                k8s-specifications/vote-deployment.yaml
-                k8s-specifications/vote-service.yaml
-                k8s-specifications/worker-deployment.yaml
-              imagePullSecrets: |
-                docker-connection  # Use your ACR/DockerHub connection
-
+                $(Build.SourcesDirectory)/k8s-specifications/db-deployment.yaml
+                $(Build.SourcesDirectory)/k8s-specifications/db-service.yaml
+                $(Build.SourcesDirectory)/k8s-specifications/redis-deployment.yaml
+                $(Build.SourcesDirectory)/k8s-specifications/redis-service.yaml
+                $(Build.SourcesDirectory)/k8s-specifications/result-deployment.yaml
+                $(Build.SourcesDirectory)/k8s-specifications/result-service.yaml
+                $(Build.SourcesDirectory)/k8s-specifications/vote-deployment.yaml
+                $(Build.SourcesDirectory)/k8s-specifications/vote-service.yaml
+                $(Build.SourcesDirectory)/k8s-specifications/worker-deployment.yaml
+              imagePullSecrets: 'docker-connection'  # Use your ACR/DockerHub connection
