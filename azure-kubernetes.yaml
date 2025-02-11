@@ -1,0 +1,35 @@
+trigger:
+  - main  # You can change this to a specific branch if needed
+
+stages:
+- stage: Deploy
+  displayName: 'Deploy to AKS'
+  jobs:
+  - deployment: Deploy
+    displayName: 'Deploying Services to AKS'
+    pool:
+      vmImage: 'ubuntu-latest'
+    environment: 'production'  # Change as per your environment name in Azure DevOps
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: KubernetesManifest@0
+            displayName: 'Deploy Kubernetes Manifests'
+            inputs:
+              action: 'deploy'
+              kubernetesServiceConnection: 'kubeCluster-connection'
+              namespace: 'default'
+              manifests: |
+                k8s-specifications/db-deployment.yaml
+                k8s-specifications/db-service.yaml
+                k8s-specifications/redis-deployment.yaml
+                k8s-specifications/redis-service.yaml
+                k8s-specifications/result-deployment.yaml
+                k8s-specifications/result-service.yaml
+                k8s-specifications/vote-deployment.yaml
+                k8s-specifications/vote-service.yaml
+                k8s-specifications/worker-deployment.yaml
+              imagePullSecrets: |
+                docker-connection  # Use your ACR/DockerHub connection
+
