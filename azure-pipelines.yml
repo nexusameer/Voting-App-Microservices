@@ -27,7 +27,7 @@ jobs:
     displayName: 'Build and Push Vote App Image'
     inputs:
       repository: 'vote'
-      dockerfile: 'Dockerfile-vote'
+      dockerfile: 'vote/Dockerfile'  # Corrected path for Dockerfile
       command: 'buildAndPush'
       tags: 'latest'
 
@@ -35,7 +35,7 @@ jobs:
     displayName: 'Build and Push Result App Image'
     inputs:
       repository: 'result'
-      dockerfile: 'Dockerfile-result'
+      dockerfile: 'result/Dockerfile'  # Corrected path for Dockerfile
       command: 'buildAndPush'
       tags: 'latest'
 
