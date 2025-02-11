@@ -41,7 +41,7 @@ stages:
 
   jobs:
   - deployment: Deploy
-    displayName: Deploy
+    displayName: Deploy to AKS Cluster
     pool:
       vmImage: $(vmImageName)
     environment: 'nexusameerVotingAppMicroservices.default'
@@ -63,9 +63,7 @@ stages:
               scriptType: bash
               scriptLocation: inlineScript
               inlineScript: |
-                az aks get-credentials --resource-group MyPortFolio --name KubeCluster --overwrite-existing
-                kubectl create role azure-devops-deployer-role --namespace default --verb=get,list,create,update,patch,delete --resource=pods,deployments,services
-                kubectl create rolebinding azure-devops-deployer-binding --namespace default --role=azure-devops-deployer-role --serviceaccount=default:default
+                az aks get-credentials --resource-group My_PortFolio --name KubeCluster --overwrite-existing
 
           - task: KubernetesManifest@0
             displayName: Deploy to Kubernetes cluster
