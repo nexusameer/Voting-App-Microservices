@@ -1,14 +1,10 @@
-# Deploy to Azure Kubernetes Service
-# Build and push image to Docker Hub; Deploy to AKS
-
 trigger:
 - main
 
 resources:
-- repo: self
+  - repo: self
 
 variables:
-
   # Docker Hub service connection
   dockerRegistryServiceConnection: 'dockerhub-service-connection'
   imageRepository: 'nexusameer/votingappmicroservices'
@@ -16,7 +12,7 @@ variables:
   dockerfilePath: '**/Dockerfile'
   tag: 'latest'
   imagePullSecret: 'dockerhub-auth'
-
+  
   # Agent VM image name
   vmImageName: 'ubuntu-latest'
 
@@ -42,10 +38,14 @@ stages:
     - upload: manifests
       artifact: manifests
 
+    - script: |
+        kubectl create role azure-devops-deployer-role --namespace default --verb=get,list,create,update,patch,delete --resource=pods,deployments,services
+        kubectl create rolebinding azure-devops-deployer-binding --namespace default --role=azure-devops-deployer-role --serviceaccount=default:default
+      displayName: "Grant RBAC Permissions"
+
 - stage: Deploy
   displayName: Deploy stage
   dependsOn: Build
-
   jobs:
   - deployment: Deploy
     displayName: Deploy to AKS
@@ -62,6 +62,7 @@ stages:
               action: createSecret
               secretName: $(imagePullSecret)
               dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
+              namespace: default  # Added namespace
 
           - task: KubernetesManifest@0
             displayName: Deploy to Kubernetes Cluster
@@ -74,4 +75,4 @@ stages:
                 $(imagePullSecret)
               containers: |
                 $(containerRegistry)/$(imageRepository):$(tag)
-              namespace: 'your-namespace-here'  # Optional but recommended
+              namespace: default  # Changed from 'your-namespace-here' to 'default'
