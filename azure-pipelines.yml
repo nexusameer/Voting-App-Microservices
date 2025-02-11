@@ -63,7 +63,7 @@ stages:
               scriptType: bash
               scriptLocation: inlineScript
               inlineScript: |
-                az aks get-credentials --resource-group <Resource-Group-Name> --name <AKS-Cluster-Name> --overwrite-existing
+                az aks get-credentials --resource-group MyPortFolio --name KubeCluster --overwrite-existing
                 kubectl create role azure-devops-deployer-role --namespace default --verb=get,list,create,update,patch,delete --resource=pods,deployments,services
                 kubectl create rolebinding azure-devops-deployer-binding --namespace default --role=azure-devops-deployer-role --serviceaccount=default:default
 
