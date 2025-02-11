@@ -5,16 +5,12 @@ resources:
 - repo: self
 
 variables:
-
-  # Docker Hub service connection
   dockerRegistryServiceConnection: 'dockerhub-service-connection'
   imageRepository: 'nexusameer/votingappmicroservices'
   containerRegistry: 'docker.io'
   dockerfilePath: '**/Dockerfile'
   tag: 'latest'
   imagePullSecret: 'dockerhub-auth'
-
-  # Agent VM image name
   vmImageName: 'ubuntu-latest'
 
 stages:
@@ -60,10 +56,16 @@ stages:
               secretName: $(imagePullSecret)
               dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
 
-          - script: |
-              kubectl create role azure-devops-deployer-role --namespace default --verb=get,list,create,update,patch,delete --resource=pods,deployments,services
-              kubectl create rolebinding azure-devops-deployer-binding --namespace default --role=azure-devops-deployer-role --serviceaccount=default:default
-            displayName: "Grant RBAC Permissions"
+          - task: AzureCLI@2
+            displayName: Authenticate to AKS
+            inputs:
+              azureSubscription: 'azure-resource'
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                az aks get-credentials --resource-group <Resource-Group-Name> --name <AKS-Cluster-Name> --overwrite-existing
+                kubectl create role azure-devops-deployer-role --namespace default --verb=get,list,create,update,patch,delete --resource=pods,deployments,services
+                kubectl create rolebinding azure-devops-deployer-binding --namespace default --role=azure-devops-deployer-role --serviceaccount=default:default
 
           - task: KubernetesManifest@0
             displayName: Deploy to Kubernetes cluster
