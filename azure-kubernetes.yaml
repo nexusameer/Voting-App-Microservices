@@ -1,5 +1,5 @@
 trigger:
-  - main  # You can change this to a specific branch if needed
+  - main
 
 stages:
 - stage: Deploy
@@ -9,11 +9,18 @@ stages:
     displayName: 'Deploying Services to AKS'
     pool:
       vmImage: 'ubuntu-latest'
-    environment: 'production'  # Change as per your environment name in Azure DevOps
+    environment: 'production'
     strategy:
       runOnce:
         deploy:
           steps:
+          - checkout: self  # Ensures repo is fully cloned
+            persistCredentials: true
+            clean: true
+
+          - script: ls -R $(Build.SourcesDirectory)  # Debugging step
+            displayName: 'Debug: List all files in working directory'
+
           - task: KubernetesManifest@0
             displayName: 'Deploy Kubernetes Manifests'
             inputs:
@@ -30,4 +37,4 @@ stages:
                 $(Build.SourcesDirectory)/k8s-specifications/vote-deployment.yaml
                 $(Build.SourcesDirectory)/k8s-specifications/vote-service.yaml
                 $(Build.SourcesDirectory)/k8s-specifications/worker-deployment.yaml
-              imagePullSecrets: 'docker-connection'  # Use your ACR/DockerHub connection
+              imagePullSecrets: 'docker-connection'
