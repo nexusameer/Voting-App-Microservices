@@ -1,78 +1,72 @@
 trigger:
-- main
-
-resources:
-- repo: self
+  branches:
+    include:
+      - main
 
 variables:
-  dockerRegistryServiceConnection: 'dockerhub-service-connection'
-  imageRepository: 'nexusameer/votingappmicroservices'
-  containerRegistry: 'docker.io'
-  dockerfilePath: '**/Dockerfile'
-  tag: 'latest'
-  imagePullSecret: 'dockerhub-auth'
-  vmImageName: 'ubuntu-latest'
+  resourceGroupName: 'My_PortFolio'
+  aksClusterName: 'KubeCluster'
+  containerRegistry: 'azure-resource.azurecr.io'
+  voteImage: '$(containerRegistry)/vote:latest'
+  resultImage: '$(containerRegistry)/result:latest'
 
-stages:
-- stage: Build
-  displayName: Build stage
-  jobs:
-  - job: Build
-    displayName: Build
-    pool:
-      vmImage: $(vmImageName)
-    steps:
-    - task: Docker@2
-      displayName: Build and push an image to Docker Hub
-      inputs:
-        command: buildAndPush
-        repository: $(imageRepository)
-        dockerfile: $(dockerfilePath)
-        containerRegistry: $(dockerRegistryServiceConnection)
-        tags: |
-          $(tag)
+jobs:
+- job: BuildDockerImages
+  displayName: 'Build and Push Docker Images'
+  pool:
+    vmImage: 'ubuntu-latest'
 
-    - upload: manifests
-      artifact: manifests
+  steps:
+  - task: Docker@2
+    displayName: 'Login to Azure Container Registry'
+    inputs:
+      containerRegistry: 'azure-acr-service-connection'
+      command: 'login'
 
-- stage: Deploy
-  displayName: Deploy stage
-  dependsOn: Build
+  - task: Docker@2
+    displayName: 'Build and Push Vote App Image'
+    inputs:
+      repository: 'vote'
+      dockerfile: 'Dockerfile-vote'
+      command: 'buildAndPush'
+      tags: 'latest'
 
-  jobs:
-  - deployment: Deploy
-    displayName: Deploy to AKS Cluster
-    pool:
-      vmImage: $(vmImageName)
-    environment: 'nexusameerVotingAppMicroservices.default'
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - task: KubernetesManifest@0
-            displayName: Create imagePullSecret
-            inputs:
-              action: createSecret
-              secretName: $(imagePullSecret)
-              dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
+  - task: Docker@2
+    displayName: 'Build and Push Result App Image'
+    inputs:
+      repository: 'result'
+      dockerfile: 'Dockerfile-result'
+      command: 'buildAndPush'
+      tags: 'latest'
 
-          - task: AzureCLI@2
-            displayName: Authenticate to AKS
-            inputs:
-              azureSubscription: 'azure-resource'
-              scriptType: bash
-              scriptLocation: inlineScript
-              inlineScript: |
-                az aks get-credentials --resource-group My_PortFolio --name KubeCluster --overwrite-existing
+- job: DeployKubernetes
+  displayName: 'Deploy to AKS'
+  dependsOn: BuildDockerImages
+  pool:
+    vmImage: 'ubuntu-latest'
 
-          - task: KubernetesManifest@0
-            displayName: Deploy to Kubernetes cluster
-            inputs:
-              action: deploy
-              manifests: |
-                $(Pipeline.Workspace)/manifests/deployment.yml
-                $(Pipeline.Workspace)/manifests/service.yml
-              imagePullSecrets: |
-                $(imagePullSecret)
-              containers: |
-                $(containerRegistry)/$(imageRepository):$(tag)
+  steps:
+  - task: AzureCLI@2
+    displayName: 'Set Azure Subscription'
+    inputs:
+      azureSubscription: 'azure-resource-service-connection'
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        az aks get-credentials --resource-group $(resourceGroupName) --name $(aksClusterName)
+
+  - task: KubernetesManifest@0
+    displayName: 'Create Kubernetes Deployments'
+    inputs:
+      action: 'deploy'
+      kubernetesServiceConnection: 'aks-service-connection'
+      namespace: 'default'
+      manifests: |
+        k8s-specifications/vote-deployment.yaml
+        k8s-specifications/result-deployment.yaml
+      containers: |
+        $(voteImage)
+        $(resultImage)
+
+  - script: kubectl get all
+    displayName: 'Verify Kubernetes Resources'
